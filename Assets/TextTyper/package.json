@@ -1,0 +1,10 @@
+{
+  "author": "RedBlueGames <http://www.redbluegames.com> (http://www.redbluegames.com)",
+  "description": "Text typing effect for Unity uGUI Text components",
+  "displayName": "TextTyper",
+  "license": "MIT",
+  "name": "com.redbluegames.texttyper",
+  "version": "2.1.0",
+  "type": "library",
+  "unity": "2018.3"
+}

@@ -1,0 +1,15 @@
+{
+    "name": "RedBlueGames.TextTyper.Examples",
+    "references": [
+        "RedBlueGames.TextTyper",
+        "Unity.TextMeshPro"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

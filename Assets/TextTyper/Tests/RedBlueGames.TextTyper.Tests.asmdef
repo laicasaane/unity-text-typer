@@ -1,0 +1,18 @@
+{
+    "name": "RedBlueGames.TextTyper.Tests",
+    "references": [
+        "RedBlueGames.TextTyper"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}
