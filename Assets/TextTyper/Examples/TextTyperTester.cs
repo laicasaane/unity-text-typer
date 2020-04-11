@@ -13,21 +13,21 @@
     public class TextTyperTester : MonoBehaviour
     {
         [SerializeField]
-        private AudioClip printSoundEffect;
+        private AudioClip printSoundEffect = null;
 
         [Header("UI References")]
 
         [SerializeField]
-        private Button printNextButton;
+        private Button printNextButton = null;
 
         [SerializeField]
-        private Button printNoSkipButton;
+        private Button printNoSkipButton = null;
 
-        private Queue<string> dialogueLines = new Queue<string>();
+        private readonly Queue<string> dialogueLines = new Queue<string>();
 
         [SerializeField]
         [Tooltip("The text typer element to test typing with")]
-        private TextTyper testTextTyper;
+        private TextTyper testTextTyper = null;
 
         public void Start()
         {

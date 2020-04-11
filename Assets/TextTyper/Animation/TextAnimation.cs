@@ -12,15 +12,15 @@
     {
         [Tooltip("0-based index of the first printable character that should be animated")]
         [SerializeField]
-        private int firstCharToAnimate;
+        private int firstCharToAnimate = 0;
 
         [Tooltip("0-based index of the last printable character that should be animated")]
         [SerializeField]
-        private int lastCharToAnimate;
+        private int lastCharToAnimate = 0;
 
         [Tooltip("If true, animation will begin playing immediately on Awake")]
         [SerializeField]
-        private bool playOnAwake;
+        private bool playOnAwake = false;
 
         /// <summary>
         /// Determines how often Animate() will be called
@@ -123,7 +123,7 @@
         protected abstract void Animate(int characterIndex, out Vector2 translation, out float rotation, out float scale);
 
         /// <summary>
-        /// Get the vertices of the TMPro mesh, request translation/rotation/scale info from Animate(), 
+        /// Get the vertices of the TMPro mesh, request translation/rotation/scale info from Animate(),
         /// then, transform the vertices and apply them back to the mesh
         /// </summary>
         public void AnimateAllChars()

@@ -12,11 +12,11 @@
     {
         [SerializeField]
         [Tooltip("The library of CurvePresets that can be used by this component.")]
-        private CurveLibrary curveLibrary;
+        private CurveLibrary curveLibrary = null;
 
         [SerializeField]
         [Tooltip("The name (key) of the CurvePreset this animation should use.")]
-        private string curvePresetKey;
+        private string curvePresetKey = string.Empty;
 
         private CurvePreset curvePreset;
 
@@ -59,7 +59,7 @@
 
             if (characterIndex >= this.FirstCharToAnimate && characterIndex <= this.LastCharToAnimate)
             {
-                // Calculate a t based on time since the animation started, 
+                // Calculate a t based on time since the animation started,
                 // but offset per character (to produce wave effects)
                 float t = Time.time - this.timeAnimationStarted + (characterIndex * this.curvePreset.timeOffsetPerChar);
 

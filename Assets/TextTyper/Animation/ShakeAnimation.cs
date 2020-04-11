@@ -12,11 +12,11 @@
     {
         [SerializeField]
         [Tooltip("The library of ShakePresets that can be used by this component.")]
-        private ShakeLibrary shakeLibrary;
+        private ShakeLibrary shakeLibrary = null;
 
         [SerializeField]
         [Tooltip("The name (key) of the ShakePreset this animation should use.")]
-        private string shakePresetKey;
+        private string shakePresetKey = string.Empty;
 
         private ShakePreset shakePreset;
 
