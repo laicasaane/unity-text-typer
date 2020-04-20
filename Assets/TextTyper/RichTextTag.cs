@@ -1,8 +1,5 @@
 ﻿namespace RedBlueGames.Tools.TextTyper
 {
-    using System.Collections;
-    using UnityEngine;
-
     /// <summary>
     /// RichTextTags help parse text that contains HTML style tags, used by Unity's RichText text components.
     /// </summary>

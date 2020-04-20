@@ -1,6 +1,5 @@
 ﻿namespace RedBlueGames.Tools.TextTyper
 {
-    using System.Collections;
     using System.Collections.Generic;
     using UnityEngine;
 

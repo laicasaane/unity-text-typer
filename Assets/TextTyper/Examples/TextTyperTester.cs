@@ -1,11 +1,8 @@
 ﻿namespace RedBlueGames.Tools.TextTyper
 {
     using UnityEngine;
-    using System.Collections;
     using System.Collections.Generic;
-    using RedBlueGames.Tools.TextTyper;
     using UnityEngine.UI;
-    using TMPro;
 
     /// <summary>
     /// Class that tests TextTyper and shows how to interface with it.

@@ -5,12 +5,11 @@
     using TMPro;
     using UnityEngine;
     using UnityEngine.Events;
-    using UnityEngine.UI;
 
     /// <summary>
     /// Type text component types out Text one character at a time. Heavily adapted from synchrok's GitHub project.
     /// </summary>
-    [RequireComponent(typeof(TextMeshProUGUI))]
+    [RequireComponent(typeof(TMP_Text))]
     public sealed class TextTyper : MonoBehaviour
     {
         /// <summary>
@@ -49,7 +48,7 @@
         [Tooltip("Event called when a character is printed. Inteded for audio callbacks.")]
         private CharacterPrintedEvent characterPrinted = new CharacterPrintedEvent();
 
-        private TextMeshProUGUI textComponent;
+        private TMP_Text textComponent;
         private float defaultPrintDelay;
         private List<float> characterPrintDelays;
         private List<TextAnimation> animations;
@@ -91,13 +90,13 @@
             }
         }
 
-        private TextMeshProUGUI TextComponent
+        private TMP_Text TextComponent
         {
             get
             {
                 if (this.textComponent == null)
                 {
-                    this.textComponent = this.GetComponent<TextMeshProUGUI>();
+                    this.textComponent = this.GetComponent<TMP_Text>();
                 }
 
                 return this.textComponent;
