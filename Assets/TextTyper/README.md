@@ -28,6 +28,25 @@ Features
 - **OnComplete Callback**
 - **OnCharacterPrinted Callback (for audio)**
 
+Changelog on UPM branch
+--------
+
+### 2.2.0
+- The fields named `PunctuationCharacters` inside `TextTyper` and `TextTyperConfig` have been renamed to `Punctuations`. Their type has been changed to `List<string>`
+- `TextSymbol` class has been moved out of `TextTagParser`
+- The constructors of `TextSymbol` has been changed into `Initialize(...)` methods
+- `TextTagParser` is now a static class
+- The signature of `TextTagParser.CreateSymbolListFromText(...)` has been changed. It now requires a `List<TextSymbol>` parameter to reduce allocation
+- `TextTagParser` now uses a pool of `TextSymbol` to reduce allocation
+- Add `Pause()` and `Resume(...)` methods to `TextTyper`
+
+### 2.1.3
+- Add `TextTyperConfig` field to `TextTyper` to allow overriding default settings: `PrintDelay`, `PunctuationDelayMultiplier`, `PunctuationCharacters`
+- `TextTyper.TypeText(...)` can now receive an instance of `TextTyperConfig` as an alternated config. It's only valid until the next invocation of `TypeText(...)`
+
+### 2.1.2
+- `TextTyper` now requires `TMP_Text` instead of `TextMeshProUGUI`
+
 Screenshots
 --------
 ![TypeText Screenshot GIF](https://github.com/redbluegames/unity-text-typer/blob/master/README-Images/ss_chat_watermarked.gif)
