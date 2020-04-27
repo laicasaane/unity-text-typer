@@ -47,7 +47,6 @@
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
-
                 var tag = RichTextTag.ParseNext("blah<color=red>boo</color");
                 LogTag(tag);
                 tag = RichTextTag.ParseNext("<color=blue>blue</color");
@@ -58,6 +57,11 @@
                 LogTag(tag);
                 tag = RichTextTag.ParseNext("This tag is a closing tag </bold>");
                 LogTag(tag);
+            }
+
+            if (Input.GetKeyDown(KeyCode.LeftControl))
+            {
+                ShowScript(Time.smoothDeltaTime);
             }
         }
 
@@ -78,14 +82,14 @@
             ShowScript();
         }
 
-        private void ShowScript()
+        private void ShowScript(float printDelay = -1)
         {
             if (dialogueLines.Count <= 0)
             {
                 return;
             }
 
-            this.testTextTyper.TypeText(dialogueLines.Dequeue());
+            this.testTextTyper.TypeText(dialogueLines.Dequeue(), printDelay);
         }
 
         private void LogTag(RichTextTag tag)

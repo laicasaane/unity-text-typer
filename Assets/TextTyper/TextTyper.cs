@@ -24,13 +24,17 @@
 
         // Characters that are considered punctuation in this language. TextTyper pauses on these characters
         // a bit longer by default. Could be a setting sometime since this doesn't localize.
-        private static readonly List<char> punctutationCharacters = new List<char>
+        private static readonly List<char> PunctuationCharacters = new List<char>
         {
             '.',
             ',',
             '!',
             '?'
         };
+
+        [SerializeField]
+        [Tooltip("The configuration that overrides default settings.")]
+        private TextTyperConfig config = null;
 
         [SerializeField]
         [Tooltip("The library of ShakePreset animations that can be used by this component.")]
@@ -49,10 +53,12 @@
         private CharacterPrintedEvent characterPrinted = new CharacterPrintedEvent();
 
         private TMP_Text textComponent;
+        private TextTyperConfig defaultConfig;
         private float defaultPrintDelay;
-        private List<float> characterPrintDelays;
-        private List<TextAnimation> animations;
         private Coroutine typeTextCoroutine;
+
+        private readonly List<float> characterPrintDelays;
+        private readonly List<TextAnimation> animations;
 
         /// <summary>
         /// Gets the PrintCompleted callback event.
@@ -103,6 +109,36 @@
             }
         }
 
+        public TextTyper()
+        {
+            this.characterPrintDelays = new List<float>();
+            this.animations = new List<TextAnimation>();
+        }
+
+        private float GetPrintDelay()
+        {
+            if (this.defaultConfig)
+                return this.defaultConfig.PrintDelay;
+
+            return PrintDelaySetting;
+        }
+
+        private float GetPunctuationDelayMultiplier()
+        {
+            if (this.defaultConfig)
+                return this.defaultConfig.PunctuationDelayMultiplier;
+
+            return PunctuationDelayMultiplier;
+        }
+
+        private List<char> GetPunctutationCharacters()
+        {
+            if (this.defaultConfig)
+                return this.defaultConfig.PunctuationCharacters;
+
+            return PunctuationCharacters;
+        }
+
         /// <summary>
         /// Types the text into the Text component character by character, using the specified (optional) print delay per character.
         /// </summary>
@@ -114,11 +150,38 @@
 
             // Remove all existing TextAnimations
             // TODO - Would be better to pool/reuse these components
-            foreach ( var anim in GetComponents<TextAnimation>( ) ) {
-                Destroy( anim );
+            foreach (var anim in GetComponents<TextAnimation>())
+            {
+                Destroy(anim);
             }
 
-            this.defaultPrintDelay = printDelay > 0 ? printDelay : PrintDelaySetting;
+            this.defaultConfig = this.config;
+            this.defaultPrintDelay = printDelay > 0 ? printDelay : GetPrintDelay();
+
+            this.ProcessCustomTags(text);
+
+            this.typeTextCoroutine = this.StartCoroutine(this.TypeTextCharByChar(text));
+        }
+
+        /// <summary>
+        /// Types the text into the Text component character by character, using the specified (optional) print delay per character.
+        /// </summary>
+        /// <param name="text">Text to type.</param>
+        /// <param name="config">The alternated config. If null the <see cref="TextTyper.config"/> will be used.</param>
+        public void TypeText(string text, TextTyperConfig config)
+        {
+            this.CleanupCoroutine();
+
+            // Remove all existing TextAnimations
+            // TODO - Would be better to pool/reuse these components
+            foreach (var anim in GetComponents<TextAnimation>())
+            {
+                Destroy(anim);
+            }
+
+            this.defaultConfig = config ? config : this.config;
+            this.defaultPrintDelay = GetPrintDelay();
+
             this.ProcessCustomTags(text);
 
             this.typeTextCoroutine = this.StartCoroutine(this.TypeTextCharByChar(text));
@@ -203,8 +266,8 @@
         /// <param name="text">Full text string with tags</param>
         private void ProcessCustomTags(string text)
         {
-            this.characterPrintDelays = new List<float>(text.Length);
-            this.animations = new List<TextAnimation>();
+            this.characterPrintDelays.Clear();
+            this.animations.Clear();
 
             var textAsSymbolList = TextTagParser.CreateSymbolListFromText(text);
 
@@ -268,9 +331,11 @@
                 {
                     printedCharCount++;
 
-                    if (punctutationCharacters.Contains(symbol.Character))
+                    var punctuationCharacters = GetPunctutationCharacters();
+
+                    if (punctuationCharacters.Contains(symbol.Character))
                     {
-                        this.characterPrintDelays.Add(nextDelay * PunctuationDelayMultiplier);
+                        this.characterPrintDelays.Add(nextDelay * GetPunctuationDelayMultiplier());
                     }
                     else
                     {
