@@ -11,17 +11,17 @@
         public float PunctuationDelayMultiplier = 8f;
 
         [SerializeField]
-        private List<char> punctuationCharacters = new List<char>
+        private List<string> punctuations = new List<string>
         {
-            '.',
-            ',',
-            '!',
-            '?'
+            ".",
+            ",",
+            "!",
+            "?"
         };
 
-        public List<char> PunctuationCharacters
+        public List<string> Punctuations
         {
-            get { return this.punctuationCharacters; }
+            get { return this.punctuations; }
         }
     }
 }

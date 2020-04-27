@@ -1,12 +1,11 @@
 ﻿namespace RedBlueGames.Tools.TextTyper
 {
     using System.Collections.Generic;
-    using UnityEngine;
 
     /// <summary>
     /// "Utility class to assist with parsing HTML-style tags in strings
     /// </summary>
-    public sealed class TextTagParser
+    public static class TextTagParser
     {
         /// <summary>
         /// Define custom tags here. These should also be added to the CustomTagTypes List below
@@ -14,6 +13,7 @@
         public struct CustomTags
         {
             public const string Delay = "delay";
+            public const string Speed = "speed";
             public const string Anim = "anim";
             public const string Animation = "animation";
         }
@@ -22,35 +22,56 @@
         private static readonly string[] CustomTagTypes = new string[]
         {
             CustomTags.Delay,
+            CustomTags.Speed,
             CustomTags.Anim,
             CustomTags.Animation,
         };
 
-        public static List<TextSymbol> CreateSymbolListFromText(string text)
+        private static readonly Queue<TextSymbol> SymbolPool = new Queue<TextSymbol>();
+
+        private static TextSymbol GetSymbol()
         {
-            var symbolList = new List<TextSymbol>();
-            int parsedCharacters = 0;
+            if (SymbolPool.Count > 0)
+                return SymbolPool.Dequeue();
+
+            return new TextSymbol();
+        }
+
+        private static void Pool(IEnumerable<TextSymbol> symbols)
+        {
+            foreach (var symbol in symbols)
+            {
+                SymbolPool.Enqueue(symbol);
+            }
+        }
+
+        public static void CreateSymbolListFromText(string text, List<TextSymbol> symbolList)
+        {
+            Pool(symbolList);
+            symbolList.Clear();
+
+            var parsedCharacters = 0;
+
             while (parsedCharacters < text.Length)
             {
-                TextSymbol symbol = null;
+                TextSymbol symbol;
 
                 // Check for tags
                 var remainingText = text.Substring(parsedCharacters, text.Length - parsedCharacters);
+
                 if (RichTextTag.StringStartsWithTag(remainingText))
                 {
                     var tag = RichTextTag.ParseNext(remainingText);
-                    symbol = new TextSymbol(tag);
+                    symbol = GetSymbol().Initialize(tag);
                 }
                 else
                 {
-                    symbol = new TextSymbol(remainingText.Substring(0, 1));
+                    symbol = GetSymbol().Initialize(remainingText.Substring(0, 1));
                 }
 
                 parsedCharacters += symbol.Length;
                 symbolList.Add(symbol);
             }
-
-            return symbolList;
         }
 
         public static string RemoveAllTags(string textWithTags)
@@ -81,77 +102,6 @@
             }
 
             return textWithoutTags;
-        }
-
-        public class TextSymbol
-        {
-            public TextSymbol(string character)
-            {
-                this.Character = character[0];
-            }
-
-            public TextSymbol(RichTextTag tag)
-            {
-                this.Tag = tag;
-            }
-
-            public char Character { get; private set; }
-
-            public RichTextTag Tag { get; private set; }
-
-            public int Length
-            {
-                get
-                {
-                    return this.Text.Length;
-                }
-            }
-
-            public string Text
-            {
-                get
-                {
-                    if (this.IsTag)
-                    {
-                        return this.Tag.TagText;
-                    }
-                    else
-                    {
-                        return this.Character.ToString();
-                    }
-                }
-            }
-
-            public bool IsTag
-            {
-                get
-                {
-                    return this.Tag != null;
-                }
-            }
-
-            public float GetFloatParameter(float defaultValue = 0f)
-            {
-                if (!this.IsTag)
-                {
-                    Debug.LogWarning("Attempted to retrieve parameter from symbol that is not a tag.");
-                    return defaultValue;
-                }
-
-                float paramValue;
-                if (!float.TryParse(this.Tag.Parameter, out paramValue))
-                {
-                    var warning = string.Format(
-                                  "Found Invalid parameter format in tag [{0}]. " +
-                                  "Parameter [{1}] does not parse to a float.",
-                                  this.Tag,
-                                  this.Tag.Parameter);
-                    Debug.LogWarning(warning);
-                    paramValue = defaultValue;
-                }
-
-                return paramValue;
-            }
         }
     }
 }
