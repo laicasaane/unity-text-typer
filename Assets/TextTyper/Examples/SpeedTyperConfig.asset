@@ -10,12 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9e18d894606c1ed4083dc08d8a0d8080, type: 3}
-  m_Name: TextTyperConfig
+  m_Name: SpeedTyperConfig
   m_EditorClassIdentifier: 
-  PrintDelay: 0.04
-  PunctuationDelayMultiplier: 8
-  punctuations:
-  - .
-  - ','
-  - '!'
-  - '?'
+  PrintDelay: 0.002
+  PunctuationDelayMultiplier: 1
+  punctuations: []

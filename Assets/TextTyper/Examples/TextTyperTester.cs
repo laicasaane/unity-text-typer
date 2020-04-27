@@ -26,6 +26,11 @@
         [Tooltip("The text typer element to test typing with")]
         private TextTyper testTextTyper = null;
 
+        [SerializeField]
+        private TextTyperConfig speedTyperConfig = null;
+
+        private bool canSpeedUp;
+
         public void Start()
         {
             this.testTextTyper.PrintCompleted.AddListener(this.HandlePrintCompleted);
@@ -34,12 +39,13 @@
             this.printNextButton.onClick.AddListener(this.HandlePrintNextClicked);
             this.printNoSkipButton.onClick.AddListener(this.HandlePrintNoSkipClicked);
 
-            dialogueLines.Enqueue("Hello! My name is... <delay=0.5>NPC</delay>. Got it, <i>bub</i>?");
-            dialogueLines.Enqueue("You can <b>use</b> <i>uGUI</i> <size=40>text</size> <size=20>tag</size> and <color=#ff0000ff>color</color> tag <color=#00ff00ff>like this</color>.");
-            dialogueLines.Enqueue("bold <b>text</b> test <b>bold</b> text <b>test</b>");
-            dialogueLines.Enqueue("You can <size=40>size 40</size> and <size=20>size 20</size>");
-            dialogueLines.Enqueue("You can <color=#ff0000ff>color</color> tag <color=#00ff00ff>like this</color>.");
-            dialogueLines.Enqueue("Sample Shake Animations: <anim=lightrot>Light Rotation</anim>, <anim=lightpos>Light Position</anim>, <anim=fullshake>Full Shake</anim>\nSample Curve Animations: <animation=slowsine>Slow Sine</animation>, <animation=bounce>Bounce Bounce</animation>, <animation=crazyflip>Crazy Flip</animation>");
+            this.dialogueLines.Enqueue("Hello! My name is... <delay=0.5>NPC</delay>. Got it, <i><speed=-10>bub</speed></i>?");
+            this.dialogueLines.Enqueue("You can <b>use</b> <i>uGUI</i> <size=40>text</size> <size=20>tag</size> and <color=#ff0000ff>color</color> tag <color=#00ff00ff>like this</color>.");
+            this.dialogueLines.Enqueue("bold <b>text</b> test <b>bold</b> text <b>test</b>");
+            this.dialogueLines.Enqueue("You can <size=40>size 40</size> and <size=20>size 20</size>");
+            this.dialogueLines.Enqueue("You can <color=#ff0000ff>color</color> tag <color=#00ff00ff>like this</color>.");
+            this.dialogueLines.Enqueue("Sample Shake Animations: <anim=lightrot>Light Rotation</anim>, <anim=lightpos>Light Position</anim>, <anim=fullshake>Full Shake</anim>\nSample Curve Animations: <animation=slowsine>Slow Sine</animation>, <animation=bounce>Bounce Bounce</animation>, <animation=crazyflip>Crazy Flip</animation>");
+
             ShowScript();
         }
 
@@ -59,9 +65,13 @@
                 LogTag(tag);
             }
 
-            if (Input.GetKeyDown(KeyCode.LeftControl))
+            if (Input.GetKey(KeyCode.LeftControl))
             {
-                ShowScript(Time.smoothDeltaTime);
+                SpeedUp();
+            }
+            else
+            {
+                StopSpeedUp();
             }
         }
 
@@ -82,14 +92,46 @@
             ShowScript();
         }
 
-        private void ShowScript(float printDelay = -1)
+        private void SpeedUp()
         {
-            if (dialogueLines.Count <= 0)
+            if (this.canSpeedUp)
+                return;
+
+            if (this.testTextTyper.IsTyping)
+            {
+                this.testTextTyper.Pause();
+                this.testTextTyper.Resume(this.speedTyperConfig);
+            }
+            else
+            {
+                ShowScript(this.speedTyperConfig);
+            }
+
+            this.canSpeedUp = true;
+        }
+
+        private void StopSpeedUp()
+        {
+            if (!this.canSpeedUp)
+                return;
+
+            if (this.testTextTyper.IsTyping)
+            {
+                this.testTextTyper.Pause();
+                this.testTextTyper.Resume();
+            }
+
+            this.canSpeedUp = false;
+        }
+
+        private void ShowScript(TextTyperConfig config = null)
+        {
+            if (this.dialogueLines.Count <= 0)
             {
                 return;
             }
 
-            this.testTextTyper.TypeText(dialogueLines.Dequeue(), printDelay);
+            this.testTextTyper.TypeText(this.dialogueLines.Dequeue(), config);
         }
 
         private void LogTag(RichTextTag tag)
@@ -120,6 +162,7 @@
 
         private void HandlePrintCompleted()
         {
+            this.canSpeedUp = false;
             Debug.Log("TypeText Complete");
         }
     }

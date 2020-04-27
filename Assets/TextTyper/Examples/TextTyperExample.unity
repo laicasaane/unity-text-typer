@@ -1048,6 +1048,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40868536fcc3c2c458788a1cd1298e8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  config: {fileID: 11400000, guid: ada8fdf4267aff249911b434bab3d2de, type: 2}
   shakeLibrary: {fileID: 11400000, guid: 9a6156b25fcccac4e97ef1c8d23def06, type: 2}
   curveLibrary: {fileID: 11400000, guid: 1807857dbc33603469f5046b18ae0aae, type: 2}
   printCompleted:
@@ -1056,7 +1057,6 @@ MonoBehaviour:
   characterPrinted:
     m_PersistentCalls:
       m_Calls: []
-  config: {fileID: 11400000, guid: ada8fdf4267aff249911b434bab3d2de, type: 2}
 --- !u!1 &1368949210
 GameObject:
   m_ObjectHideFlags: 0
@@ -1247,6 +1247,7 @@ MonoBehaviour:
   printNextButton: {fileID: 961921201}
   printNoSkipButton: {fileID: 576120088}
   testTextTyper: {fileID: 1158326234}
+  speedTyperConfig: {fileID: 11400000, guid: 47e2c9f723f8de84bb3c611ad6258e98, type: 2}
 --- !u!4 &1888324656
 Transform:
   m_ObjectHideFlags: 0
