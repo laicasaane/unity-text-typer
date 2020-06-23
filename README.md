@@ -31,6 +31,9 @@ Features
 Changelog on UPM branch
 --------
 
+### 2.3.0
+- Add `PrintAmount` to the config to support printing any number of characters each time.
+
 ### 2.2.0
 - The fields named `PunctuationCharacters` inside `TextTyper` and `TextTyperConfig` have been renamed to `Punctuations`. Their type has been changed to `List<string>`
 - `TextSymbol` class has been moved out of `TextTagParser`
