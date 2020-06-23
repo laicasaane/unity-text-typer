@@ -6,8 +6,13 @@
     [CreateAssetMenu(menuName = "Text Typer/Config", fileName = "TextTyperConfig")]
     public sealed class TextTyperConfig : ScriptableObject
     {
+        [Tooltip("The delay time between each print")]
         public float PrintDelay = 0.02f;
 
+        [Tooltip("The amount of characters to be printed each time")]
+        public int PrintAmount = 1;
+
+        [Tooltip("The delay time will be multiplied by this when the character is a punctuation mark")]
         public float PunctuationDelayMultiplier = 8f;
 
         [SerializeField]

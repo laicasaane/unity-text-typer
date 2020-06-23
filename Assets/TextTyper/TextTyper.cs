@@ -13,24 +13,43 @@
     public sealed class TextTyper : MonoBehaviour
     {
         /// <summary>
-        /// The print delay setting. Could make this an option some day, for fast readers.
+        /// The delay time between each print.
         /// </summary>
-        private const float PrintDelaySetting = 0.02f;
+        public const float PrintDelay = 0.02f;
+
+        /// <summary>
+        /// The amount of characters to be printed each time.
+        /// </summary>
+        public const int PrintAmount = 1;
 
         /// <summary>
         /// Default delay setting will be multiplied by this when the character is a punctuation mark
         /// </summary>
-        private const float PunctuationDelayMultiplier = 8f;
+        public const float PunctuationDelayMultiplier = 8f;
 
-        // Characters that are considered punctuation in this language. TextTyper pauses on these characters
-        // a bit longer by default. Could be a setting sometime since this doesn't localize.
-        private static readonly List<string> Punctuations = new List<string>
+        /// <summary>
+        /// Characters that are considered punctuation in this language. TextTyper pauses on these characters
+        /// a bit longer by default. Could be a setting sometime since this doesn't localize.
+        /// </summary>
+        private static readonly List<string> _punctuations = new List<string>
         {
             ".",
             ",",
             "!",
             "?"
         };
+
+        /// <summary>
+        /// Characters that are considered punctuation in this language. TextTyper pauses on these characters
+        /// a bit longer by default. Could be a setting sometime since this doesn't localize.
+        /// </summary>
+        public static IEnumerable<string> Punctuations
+        {
+            get
+            {
+                return _punctuations;
+            }
+        }
 
         [SerializeField]
         [Tooltip("The configuration that overrides default settings.")]
@@ -103,7 +122,7 @@
             {
                 if (this.textComponent == null)
                 {
-                    this.textComponent = this.GetComponent<TMP_Text>();
+                    this.textComponent = GetComponent<TMP_Text>();
                 }
 
                 return this.textComponent;
@@ -128,7 +147,15 @@
             if (this.defaultConfig)
                 return this.defaultConfig.PrintDelay;
 
-            return PrintDelaySetting;
+            return PrintDelay;
+        }
+
+        private int GetPrintAmount()
+        {
+            if (this.defaultConfig)
+                return this.defaultConfig.PrintAmount;
+
+            return PrintAmount;
         }
 
         private float GetPunctuationDelayMultiplier()
@@ -144,7 +171,7 @@
             if (this.defaultConfig)
                 return this.defaultConfig.Punctuations;
 
-            return Punctuations;
+            return _punctuations;
         }
 
         /// <summary>
@@ -153,9 +180,10 @@
         /// <param name="text">Text to type.</param>
         /// <param name="printDelay">Print delay (in seconds) per character.</param>
         /// <param name="skipChars">The number of characters to be already typed initially.</param>
-        public void TypeText(string text, float printDelay = -1, int skipChars = 0)
+        /// <param name="printAmount">The amount of characters to be printed each time.</param>
+        public void TypeText(string text, float printDelay = -1, int skipChars = 0, int printAmount = -1)
         {
-            TypeText(text, this.config, printDelay, skipChars);
+            TypeText(text, this.config, printDelay, skipChars, printAmount);
         }
 
         /// <summary>
@@ -166,12 +194,12 @@
         /// <param name="skipChars">The number of characters to be already typed initially.</param>
         public void TypeText(string text, TextTyperConfig config, int skipChars = 0)
         {
-            TypeText(text, config, -1f, skipChars);
+            TypeText(text, config, -1f, skipChars, -1);
         }
 
-        private void TypeText(string text, TextTyperConfig config, float printDelay, int skipChars)
+        private void TypeText(string text, TextTyperConfig config, float printDelay, int skipChars, int printAmount)
         {
-            this.CleanupCoroutine();
+            CleanupCoroutine();
 
             // Remove all existing TextAnimations
             // TODO - Would be better to pool/reuse these components
@@ -181,12 +209,15 @@
             }
 
             this.defaultConfig = config ? config : this.config;
-            this.ProcessCustomTags(text, printDelay > 0 ? printDelay : GetPrintDelay());
+            ProcessCustomTags(text, printDelay > 0 ? printDelay : GetPrintDelay());
 
             if (skipChars < 0)
                 skipChars = 0;
 
-            this.typeTextCoroutine = this.StartCoroutine(this.TypeTextCharByChar(text, skipChars));
+            if (printAmount < 1)
+                printAmount = GetPrintAmount();
+
+            this.typeTextCoroutine = StartCoroutine(TypeTextCharByChar(text, skipChars, printAmount));
         }
 
         /// <summary>
@@ -194,7 +225,7 @@
         /// </summary>
         public void Pause()
         {
-            this.CleanupCoroutine();
+            CleanupCoroutine();
         }
 
         /// <summary>
@@ -202,9 +233,10 @@
         /// </summary>
         /// <param name="printDelay">Print delay (in seconds) per character.</param>
         /// <param name="skipChars">The number of characters to be already typed initially.</param>
-        public void Resume(float printDelay = -1, int? skipChars = null)
+        /// <param name="printAmount">The amount of characters to be printed each time.</param>
+        public void Resume(float printDelay = -1, int? skipChars = null, int printAmount = -1)
         {
-            Resume(this.config, printDelay, skipChars ?? this.PrintedCharacters);
+            Resume(this.config, printDelay, skipChars ?? this.PrintedCharacters, printAmount);
         }
 
         /// <summary>
@@ -214,23 +246,26 @@
         /// <param name="skipChars">The number of characters to be already typed initially.</param>
         public void Resume(TextTyperConfig config, int? skipChars = null)
         {
-            Resume(config, -1f, skipChars ?? this.PrintedCharacters);
+            Resume(config, -1f, skipChars ?? this.PrintedCharacters, -1);
         }
 
-        private void Resume(TextTyperConfig config, float printDelay, int skipChars)
+        private void Resume(TextTyperConfig config, float printDelay, int skipChars, int printAmount)
         {
             if (skipChars >= this.taglessText.Length)
                 return;
 
-            this.CleanupCoroutine();
+            CleanupCoroutine();
 
             this.defaultConfig = config ? config : this.config;
-            this.ProcessCustomTags(printDelay > 0 ? printDelay : GetPrintDelay());
+            ProcessCustomTags(printDelay > 0 ? printDelay : GetPrintDelay());
 
             if (skipChars < 0)
                 skipChars = 0;
 
-            this.typeTextCoroutine = this.StartCoroutine(this.ResumeTypingTextCharByChar(skipChars));
+            if (printAmount < 1)
+                printAmount = GetPrintAmount();
+
+            this.typeTextCoroutine = StartCoroutine(ResumeTypingTextCharByChar(skipChars, printAmount));
         }
 
         /// <summary>
@@ -238,12 +273,12 @@
         /// </summary>
         public void Skip()
         {
-            this.CleanupCoroutine();
+            CleanupCoroutine();
 
             this.TextComponent.maxVisibleCharacters = int.MaxValue;
-            this.UpdateMeshAndAnims();
+            UpdateMeshAndAnims();
 
-            this.OnTypewritingComplete();
+            OnTypewritingComplete();
         }
 
         /// <summary>
@@ -260,57 +295,59 @@
         {
             if (this.typeTextCoroutine != null)
             {
-                this.StopCoroutine(this.typeTextCoroutine);
+                StopCoroutine(this.typeTextCoroutine);
                 this.typeTextCoroutine = null;
             }
         }
 
-        private IEnumerator TypeTextCharByChar(string text, int printedChars)
+        private IEnumerator TypeTextCharByChar(string text, int skipChars, int printAmount)
         {
             this.taglessText = TextTagParser.RemoveAllTags(text);
-            var totalPrintedChars = this.taglessText.Length;
+            var totalChars = this.taglessText.Length;
             int index;
 
-            this.PrintedCharacters = printedChars;
+            this.PrintedCharacters = skipChars;
             this.TextComponent.text = TextTagParser.RemoveCustomTags(text);
 
-            while (this.PrintedCharacters < totalPrintedChars)
+            while (this.PrintedCharacters < totalChars)
             {
-                index = this.PrintedCharacters++;
+                this.PrintedCharacters = Mathf.Clamp(this.PrintedCharacters + printAmount, 0, totalChars);
+                index = this.PrintedCharacters - 1;
 
                 this.TextComponent.maxVisibleCharacters = this.PrintedCharacters;
-                this.UpdateMeshAndAnims();
+                UpdateMeshAndAnims();
 
-                this.OnCharacterPrinted(this.taglessText[index].ToString());
+                OnCharacterPrinted(this.taglessText[index].ToString());
 
                 yield return new WaitForSeconds(this.characterPrintDelays[index]);
             }
 
             this.typeTextCoroutine = null;
-            this.OnTypewritingComplete();
+            OnTypewritingComplete();
         }
 
-        private IEnumerator ResumeTypingTextCharByChar(int printedChars)
+        private IEnumerator ResumeTypingTextCharByChar(int skipChars, int printAmount)
         {
-            var totalPrintedChars = this.taglessText.Length;
+            var totalChars = this.taglessText.Length;
             int index;
 
-            this.PrintedCharacters = printedChars;
+            this.PrintedCharacters = skipChars;
 
-            while (this.PrintedCharacters < totalPrintedChars)
+            while (this.PrintedCharacters < totalChars)
             {
-                index = this.PrintedCharacters++;
+                this.PrintedCharacters = Mathf.Clamp(this.PrintedCharacters + printAmount, 0, totalChars);
+                index = this.PrintedCharacters - 1;
 
                 this.TextComponent.maxVisibleCharacters = this.PrintedCharacters;
-                this.UpdateMeshAndAnims();
+                UpdateMeshAndAnims();
 
-                this.OnCharacterPrinted(this.taglessText[index].ToString());
+                OnCharacterPrinted(this.taglessText[index].ToString());
 
                 yield return new WaitForSeconds(this.characterPrintDelays[index]);
             }
 
             this.typeTextCoroutine = null;
-            this.OnTypewritingComplete();
+            OnTypewritingComplete();
         }
 
         private void UpdateMeshAndAnims()
@@ -323,7 +360,7 @@
 
             // Force animate calls on all TextAnimations because TMPro has reset the mesh to its base state
             // NOTE: This must happen immediately. Cannot wait until end of frame, or the base mesh will be rendered
-            for (int i = 0; i < this.animations.Count; i++)
+            for (var i = 0; i < this.animations.Count; i++)
             {
                 this.animations[i].AnimateAllChars();
             }
@@ -411,14 +448,14 @@
                         {
                             // Add a TextAnimation component to process this animation
                             TextAnimation anim = null;
-                            if (this.IsAnimationShake(customTagParam))
+                            if (IsAnimationShake(customTagParam))
                             {
-                                anim = gameObject.AddComponent<ShakeAnimation>();
+                                anim = this.gameObject.AddComponent<ShakeAnimation>();
                                 ((ShakeAnimation)anim).LoadPreset(this.shakeLibrary, customTagParam);
                             }
-                            else if (this.IsAnimationCurve(customTagParam))
+                            else if (IsAnimationCurve(customTagParam))
                             {
-                                anim = gameObject.AddComponent<CurveAnimation>();
+                                anim = this.gameObject.AddComponent<CurveAnimation>();
                                 ((CurveAnimation)anim).LoadPreset(this.curveLibrary, customTagParam);
                             }
                             else
