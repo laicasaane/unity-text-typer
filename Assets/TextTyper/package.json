@@ -1,10 +1,10 @@
 {
-  "author": "RedBlueGames <http://www.redbluegames.com> (http://www.redbluegames.com)",
+  "author": "Laicasaane <https://github.com/laicasaane/> (https://github.com/laicasaane/)",
   "description": "Text typing effect for Unity uGUI Text components",
   "displayName": "TextTyper",
   "license": "MIT",
-  "name": "com.redbluegames.texttyper",
-  "version": "2.3.0",
+  "name": "com.laicasaane.texttyper",
+  "version": "3.0.0",
   "type": "library",
   "unity": "2018.3"
 }
