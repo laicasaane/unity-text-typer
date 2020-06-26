@@ -64,6 +64,10 @@
         private CurveLibrary curveLibrary = null;
 
         [SerializeField]
+        [Tooltip("If set, the typer will type text even if the game is paused (Time.timeScale = 0)")]
+        private bool useUnscaledTime = false;
+
+        [SerializeField]
         [Tooltip("Event that's called when the text has finished printing.")]
         private UnityEvent printCompleted = new UnityEvent();
 
@@ -319,7 +323,12 @@
 
                 OnCharacterPrinted(this.taglessText[index].ToString());
 
-                yield return new WaitForSeconds(this.characterPrintDelays[index]);
+                var delay = this.characterPrintDelays[index];
+
+                if (this.useUnscaledTime)
+                    yield return new WaitForSecondsRealtime(delay);
+                else
+                    yield return new WaitForSeconds(delay);
             }
 
             this.typeTextCoroutine = null;
@@ -343,7 +352,12 @@
 
                 OnCharacterPrinted(this.taglessText[index].ToString());
 
-                yield return new WaitForSeconds(this.characterPrintDelays[index]);
+                var delay = this.characterPrintDelays[index];
+
+                if (this.useUnscaledTime)
+                    yield return new WaitForSecondsRealtime(delay);
+                else
+                    yield return new WaitForSeconds(delay);
             }
 
             this.typeTextCoroutine = null;
@@ -463,6 +477,7 @@
                                 // Could not find animation. Should we error here?
                             }
 
+                            anim.UseUnscaledTime = this.useUnscaledTime;
                             anim.SetCharsToAnimate(customTagOpenIndex, printedCharCount - 1);
                             anim.enabled = true;
                             this.animations.Add(anim);
