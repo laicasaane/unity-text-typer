@@ -18,7 +18,43 @@
             public const string Animation = "animation";
         }
 
-        private static readonly string[] UnityTagTypes = new string[] { "b", "i", "size", "color", "style" };
+        private static readonly string[] UnityTags = new string[]
+        {
+            "b",
+            "i",
+            "s",
+            "u",
+            "br",
+            "nobr",
+            "size",
+            "color",
+            "style",
+            "width",
+            "align",
+            "alpha",
+            "cspace",
+            "font",
+            "indent",
+            "line-height",
+            "line-indent",
+            "link",
+            "lowercase",
+            "uppercase",
+            "smallcaps",
+            "margin",
+            "mark",
+            "mspace",
+            "noparse",
+            "page",
+            "pos",
+            "space",
+            "sprite",
+            "sup",
+            "sub",
+            "voffset",
+            "gradient"
+        };
+
         private static readonly string[] CustomTagTypes = new string[]
         {
             CustomTags.Delay,
@@ -90,7 +126,7 @@
 
         public static string RemoveUnityTags(string textWithTags)
         {
-            return RemoveTags(textWithTags, UnityTagTypes);
+            return RemoveTags(textWithTags, UnityTags);
         }
 
         private static string RemoveTags(string textWithTags, params string[] tags)
