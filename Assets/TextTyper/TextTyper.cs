@@ -308,19 +308,16 @@
         {
             this.taglessText = TextTagParser.RemoveAllTags(text);
             var totalChars = this.taglessText.Length;
-            int index;
-
-            this.PrintedCharacters = skipChars;
-            this.TextComponent.text = TextTagParser.RemoveCustomTags(text);
+            this.PrintedCharacters = Mathf.Clamp(skipChars, 0, totalChars);
+            this.TextComponent.SetText(TextTagParser.RemoveCustomTags(text));
 
             while (this.PrintedCharacters < totalChars)
             {
                 this.PrintedCharacters = Mathf.Clamp(this.PrintedCharacters + printAmount, 0, totalChars);
-                index = this.PrintedCharacters - 1;
-
+                var index = this.PrintedCharacters - 1;
                 this.TextComponent.maxVisibleCharacters = this.PrintedCharacters;
-                UpdateMeshAndAnims();
 
+                UpdateMeshAndAnims();
                 OnCharacterPrinted(this.taglessText[index].ToString());
 
                 var delay = this.characterPrintDelays[index];
@@ -338,18 +335,15 @@
         private IEnumerator ResumeTypingTextCharByChar(int skipChars, int printAmount)
         {
             var totalChars = this.taglessText.Length;
-            int index;
-
-            this.PrintedCharacters = skipChars;
+            this.PrintedCharacters = Mathf.Clamp(skipChars, 0, totalChars);
 
             while (this.PrintedCharacters < totalChars)
             {
                 this.PrintedCharacters = Mathf.Clamp(this.PrintedCharacters + printAmount, 0, totalChars);
-                index = this.PrintedCharacters - 1;
-
+                var index = this.PrintedCharacters - 1;
                 this.TextComponent.maxVisibleCharacters = this.PrintedCharacters;
-                UpdateMeshAndAnims();
 
+                UpdateMeshAndAnims();
                 OnCharacterPrinted(this.taglessText[index].ToString());
 
                 var delay = this.characterPrintDelays[index];

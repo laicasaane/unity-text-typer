@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: SpeedTyperConfig
   m_EditorClassIdentifier: 
   PrintDelay: 0.002
-  PrintAmount: 2
+  PrintAmount: 5
   PunctuationDelayMultiplier: 1
   punctuations: []
