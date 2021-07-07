@@ -31,6 +31,16 @@ Features
 Changelog on UPM branch
 --------
 
+### 3.1.0
+- Re-implement commits from upstream
+- Implement pools to reduce GC calls
+- `RedBlueGames.TextTyper.Examples.dll` is now excluded from the build by default
+- To include it in the build, just add `ENABLE_TEXTTYPER_EXAMPLES` into `Project Settings > Player > Scripting Define Symbols`
+
+### 3.0.0
+- Re-implmenet commits from upstream
+- Fix an issue that prevents speed typer to work correctly when PrintAmount is greater than the text length
+
 ### 2.3.0
 - Add `PrintAmount` to the config to support printing any number of characters each time.
 
