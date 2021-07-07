@@ -4,12 +4,15 @@
         "RedBlueGames.TextTyper",
         "Unity.TextMeshPro"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": []
+    "defineConstraints": [
+        "UNITY_EDITOR || ENABLE_TEXTTYPER_EXAMPLES"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
