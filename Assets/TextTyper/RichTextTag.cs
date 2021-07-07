@@ -10,7 +10,7 @@
         private const char OpeningNodeDelimeter = '<';
         private const char CloseNodeDelimeter = '>';
         private const char EndTagDelimeter = '/';
-        private const string ParameterDelimeter = "=";
+        private const char ParameterDelimeter = '=';
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RichTextTag"/> class.
@@ -52,11 +52,10 @@
                 tagType = tagType.TrimStart(EndTagDelimeter);
 
                 // Strip Parameter
-                var parameterDelimeterIndex = tagType.IndexOf(ParameterDelimeter);
-                if (parameterDelimeterIndex > 0)
-                {
-                    tagType = tagType.Substring(0, parameterDelimeterIndex);
-                }
+                var tagEndDelimeters = new char[] { ' ', ParameterDelimeter };
+                var delimeterIndex = tagType.IndexOfAny(tagEndDelimeters);
+                var tagEndIndex = delimeterIndex > 0 ? delimeterIndex : tagType.Length;
+                tagType = tagType.Substring(0, tagEndIndex);
 
                 return tagType;
             }

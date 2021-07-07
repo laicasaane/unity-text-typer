@@ -78,11 +78,13 @@
         private TMP_Text textComponent;
         private TextTyperConfig defaultConfig;
         private Coroutine typeTextCoroutine;
-        private string taglessText;
+        private GameObject m_gameObject;
 
-        private readonly List<float> characterPrintDelays;
-        private readonly List<TextAnimation> animations;
-        private readonly List<TextSymbol> textAsSymbolList;
+        private readonly List<TextSymbol> symbols;
+
+        private readonly PoolableList<TypableCharacter> charactersToType;
+        private readonly PoolableList<ShakeAnimation> shakeAnimations;
+        private readonly PoolableList<CurveAnimation> curveAnimations;
 
         /// <summary>
         /// Gets the PrintCompleted callback event.
@@ -124,12 +126,21 @@
         {
             get
             {
-                if (this.textComponent == null)
-                {
+                if (!this.textComponent)
                     this.textComponent = GetComponent<TMP_Text>();
-                }
 
                 return this.textComponent;
+            }
+        }
+
+        private GameObject GameObject
+        {
+            get
+            {
+                if (!this.m_gameObject)
+                    this.m_gameObject = this.gameObject;
+
+                return this.m_gameObject;
             }
         }
 
@@ -141,9 +152,11 @@
 
         public TextTyper()
         {
-            this.characterPrintDelays = new List<float>();
-            this.animations = new List<TextAnimation>();
-            this.textAsSymbolList = new List<TextSymbol>();
+            this.symbols = new List<TextSymbol>();
+
+            this.charactersToType = new PoolableList<TypableCharacter>(new TypableCharacterGetter());
+            this.shakeAnimations = new PoolableList<ShakeAnimation>(new ShakeAnimationGetter(this));
+            this.curveAnimations = new PoolableList<CurveAnimation>(new CurveAnimationGetter(this));
         }
 
         private float GetPrintDelay()
@@ -205,21 +218,17 @@
         {
             CleanupCoroutine();
 
-            // Remove all existing TextAnimations
-            // TODO - Would be better to pool/reuse these components
-            foreach (var anim in GetComponents<TextAnimation>())
-            {
-                Destroy(anim);
-            }
-
             this.defaultConfig = config ? config : this.config;
-            ProcessCustomTags(text, printDelay > 0 ? printDelay : GetPrintDelay());
+            ProcessTags(text, printDelay > 0 ? printDelay : GetPrintDelay());
 
             if (skipChars < 0)
                 skipChars = 0;
 
             if (printAmount < 1)
                 printAmount = GetPrintAmount();
+
+            var textInfo = this.TextComponent.textInfo;
+            textInfo.ClearMeshInfo(false);
 
             this.typeTextCoroutine = StartCoroutine(TypeTextCharByChar(text, skipChars, printAmount));
         }
@@ -255,13 +264,13 @@
 
         private void Resume(TextTyperConfig config, float printDelay, int skipChars, int printAmount)
         {
-            if (skipChars >= this.taglessText.Length)
+            if (skipChars >= this.charactersToType.Count)
                 return;
 
             CleanupCoroutine();
 
             this.defaultConfig = config ? config : this.config;
-            ProcessCustomTags(printDelay > 0 ? printDelay : GetPrintDelay());
+            ProcessTags(printDelay > 0 ? printDelay : GetPrintDelay());
 
             if (skipChars < 0)
                 skipChars = 0;
@@ -306,8 +315,7 @@
 
         private IEnumerator TypeTextCharByChar(string text, int skipChars, int printAmount)
         {
-            this.taglessText = TextTagParser.RemoveAllTags(text);
-            var totalChars = this.taglessText.Length;
+            this.charactersToType.GetUnsafe(out var characters, out var totalChars);
             this.PrintedCharacters = Mathf.Clamp(skipChars, 0, totalChars);
             this.TextComponent.SetText(TextTagParser.RemoveCustomTags(text));
 
@@ -315,17 +323,17 @@
             {
                 this.PrintedCharacters = Mathf.Clamp(this.PrintedCharacters + printAmount, 0, totalChars);
                 var index = this.PrintedCharacters - 1;
+
                 this.TextComponent.maxVisibleCharacters = this.PrintedCharacters;
-
                 UpdateMeshAndAnims();
-                OnCharacterPrinted(this.taglessText[index].ToString());
 
-                var delay = this.characterPrintDelays[index];
+                var printedChar = characters[index];
+                OnCharacterPrinted(printedChar.ToString());
 
                 if (this.useUnscaledTime)
-                    yield return new WaitForSecondsRealtime(delay);
+                    yield return new WaitForSecondsRealtime(printedChar.Delay);
                 else
-                    yield return new WaitForSeconds(delay);
+                    yield return new WaitForSeconds(printedChar.Delay);
             }
 
             this.typeTextCoroutine = null;
@@ -334,24 +342,24 @@
 
         private IEnumerator ResumeTypingTextCharByChar(int skipChars, int printAmount)
         {
-            var totalChars = this.taglessText.Length;
+            this.charactersToType.GetUnsafe(out var characters, out var totalChars);
             this.PrintedCharacters = Mathf.Clamp(skipChars, 0, totalChars);
 
             while (this.PrintedCharacters < totalChars)
             {
                 this.PrintedCharacters = Mathf.Clamp(this.PrintedCharacters + printAmount, 0, totalChars);
                 var index = this.PrintedCharacters - 1;
+
                 this.TextComponent.maxVisibleCharacters = this.PrintedCharacters;
-
                 UpdateMeshAndAnims();
-                OnCharacterPrinted(this.taglessText[index].ToString());
 
-                var delay = this.characterPrintDelays[index];
+                var printedChar = characters[index];
+                OnCharacterPrinted(printedChar.ToString());
 
                 if (this.useUnscaledTime)
-                    yield return new WaitForSecondsRealtime(delay);
+                    yield return new WaitForSecondsRealtime(printedChar.Delay);
                 else
-                    yield return new WaitForSeconds(delay);
+                    yield return new WaitForSeconds(printedChar.Delay);
             }
 
             this.typeTextCoroutine = null;
@@ -368,9 +376,19 @@
 
             // Force animate calls on all TextAnimations because TMPro has reset the mesh to its base state
             // NOTE: This must happen immediately. Cannot wait until end of frame, or the base mesh will be rendered
-            for (var i = 0; i < this.animations.Count; i++)
+
+            this.shakeAnimations.GetUnsafe(out var shakeAnimations, out var count);
+
+            for (var i = 0; i < count; i++)
             {
-                this.animations[i].AnimateAllChars();
+                shakeAnimations[i].AnimateAllChars();
+            }
+
+            this.curveAnimations.GetUnsafe(out var curveAnimations, out count);
+
+            for (var i = 0; i < count; i++)
+            {
+                curveAnimations[i].AnimateAllChars();
             }
         }
 
@@ -381,11 +399,11 @@
         /// the appropriate TextAnimation components
         /// </summary>
         /// <param name="text">Full text string with tags</param>
-        private void ProcessCustomTags(string text, float printDelay)
+        private void ProcessTags(string text, float printDelay)
         {
-            TextTagParser.CreateSymbolListFromText(text, this.textAsSymbolList);
+            TextTagParser.CreateSymbolListFromText(text, this.symbols);
 
-            ProcessCustomTags(printDelay);
+            ProcessTags(printDelay);
         }
 
         /// <summary>
@@ -393,21 +411,22 @@
         /// Processes shake and curve animations and spawns
         /// the appropriate TextAnimation components
         /// </summary>
-        private void ProcessCustomTags(float printDelay)
+        private void ProcessTags(float printDelay)
         {
-            this.characterPrintDelays.Clear();
-            this.animations.Clear();
+            this.charactersToType.ReturnAll();
+            this.curveAnimations.ReturnAll<OnReturnAnimation>();
+            this.shakeAnimations.ReturnAll<OnReturnAnimation>();
 
             var printedCharCount = 0;
-            var customTagOpenIndex = 0;
-            var customTagParam = string.Empty;
+            var tagOpenIndex = 0;
+            var tagParam = string.Empty;
             var nextDelay = printDelay;
             var punctuations = GetPunctutations();
             var punctuationDelayMultiplier = GetPunctuationDelayMultiplier();
 
-            foreach (var symbol in this.textAsSymbolList)
+            foreach (var symbol in this.symbols)
             {
-                if (symbol.IsTag)
+                if (symbol.IsTag && !symbol.IsReplacedWithSprite)
                 {
                     // TODO - Verification that custom tags are not nested, b/c that will not be handled gracefully
                     if (symbol.Tag.TagType == TextTagParser.CustomTags.Delay)
@@ -456,15 +475,15 @@
                         {
                             // Add a TextAnimation component to process this animation
                             TextAnimation anim = null;
-                            if (IsAnimationShake(customTagParam))
+                            if (IsAnimationShake(tagParam))
                             {
-                                anim = this.gameObject.AddComponent<ShakeAnimation>();
-                                ((ShakeAnimation)anim).LoadPreset(this.shakeLibrary, customTagParam);
+                                anim = this.shakeAnimations.GetItem();
+                                ((ShakeAnimation)anim).LoadPreset(this.shakeLibrary, tagParam);
                             }
-                            else if (IsAnimationCurve(customTagParam))
+                            else if (IsAnimationCurve(tagParam))
                             {
-                                anim = this.gameObject.AddComponent<CurveAnimation>();
-                                ((CurveAnimation)anim).LoadPreset(this.curveLibrary, customTagParam);
+                                anim = this.curveAnimations.GetItem();
+                                ((CurveAnimation)anim).LoadPreset(this.curveLibrary, tagParam);
                             }
                             else
                             {
@@ -472,32 +491,40 @@
                             }
 
                             anim.UseUnscaledTime = this.useUnscaledTime;
-                            anim.SetCharsToAnimate(customTagOpenIndex, printedCharCount - 1);
+                            anim.SetCharsToAnimate(tagOpenIndex, printedCharCount - 1);
                             anim.enabled = true;
-                            this.animations.Add(anim);
                         }
                         else
                         {
-                            customTagOpenIndex = printedCharCount;
-                            customTagParam = symbol.Tag.Parameter;
+                            tagOpenIndex = printedCharCount;
+                            tagParam = symbol.Tag.Parameter;
                         }
                     }
                     else
                     {
-                        // Unrecognized CustomTag Type. Should we error here?
+                        // Tag type is likely a Unity tag, but it might be something we don't know... could error if unrecognized.
                     }
                 }
                 else
                 {
                     printedCharCount++;
 
-                    if (punctuations.Contains(symbol.Character))
+                    var characterToType = this.charactersToType.GetItem();
+
+                    if (symbol.IsTag && symbol.IsReplacedWithSprite)
                     {
-                        this.characterPrintDelays.Add(nextDelay * punctuationDelayMultiplier);
+                        characterToType.InitializeAsSprite();
                     }
                     else
                     {
-                        this.characterPrintDelays.Add(nextDelay);
+                        characterToType.InitializeAsCharacter(symbol.Character);
+                    }
+
+                    characterToType.Delay = nextDelay;
+
+                    if (punctuations.Contains(symbol.Character))
+                    {
+                        characterToType.Delay *= punctuationDelayMultiplier;
                     }
                 }
             }
@@ -535,6 +562,53 @@
         [System.Serializable]
         public class CharacterPrintedEvent : UnityEvent<string>
         {
+        }
+
+        public readonly struct TypableCharacterGetter : IGetter<TypableCharacter>
+        {
+            public TypableCharacter Get()
+            {
+                return new TypableCharacter();
+            }
+        }
+
+        private readonly struct OnReturnAnimation : IAction<TextAnimation>
+        {
+            public void Invoke(TextAnimation item)
+            {
+                if (item)
+                    item.enabled = false;
+            }
+        }
+
+        private readonly struct ShakeAnimationGetter : IGetter<ShakeAnimation>
+        {
+            private readonly TextTyper target;
+
+            public ShakeAnimationGetter(TextTyper target)
+            {
+                this.target = target;
+            }
+
+            public ShakeAnimation Get()
+            {
+                return this.target.GameObject.AddComponent<ShakeAnimation>();
+            }
+        }
+
+        private readonly struct CurveAnimationGetter : IGetter<CurveAnimation>
+        {
+            private readonly TextTyper target;
+
+            public CurveAnimationGetter(TextTyper target)
+            {
+                this.target = target;
+            }
+
+            public CurveAnimation Get()
+            {
+                return this.target.GameObject.AddComponent<CurveAnimation>();
+            }
         }
     }
 }
